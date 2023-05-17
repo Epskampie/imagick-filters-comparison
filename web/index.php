@@ -19,6 +19,7 @@ if (isset($_GET['qualities'])) {
     $qualities = explode(',', $_GET['qualities']);
     $qualities = array_map(fn($i) => intval($i), $qualities);
 }
+
 $filters = [
     'scaleImage' => 'scaleImage',
     // 'adaptiveResizeImage' => 'adaptiveResizeImage',
@@ -53,6 +54,10 @@ $filters = [
     "SPLINE" => Imagick::FILTER_SPLINE,
     "LANCZOSRADIUS" => Imagick::FILTER_LANCZOSRADIUS,
 ];
+if (isset($_GET['filters'])) {
+    $userFilters = explode(',', $_GET['filters']);
+    $filters = array_filter($filters, fn($key) => in_array($key, $userFilters), ARRAY_FILTER_USE_KEY);
+}
 
 echo '<html><body>';
 
@@ -69,6 +74,20 @@ echo '<style>
         gap: 10px;
     }
 </style>';
+
+echo '<div class="blocks">';
+$size = round(mb_strlen($imageBlob, '8bit') / 1024);
+echo '<div class="block">'
+            .'Original'
+            .'<br>'
+            .' ('.$size.'kb)' 
+            .'<br/>'
+            .'<img 
+                src="'.$url.'"
+                onload="this.style.width = `${this.naturalWidth / window.devicePixelRatio}px`"
+            />'
+            .'</div>';
+echo '</div>';
 
 foreach ($qualities as $quality) {
     echo '<div class="blocks">';
@@ -96,7 +115,12 @@ foreach ($qualities as $quality) {
             .$name
             .'<br>'
             .' ('.$size.'kb)' 
-            .'<br/><img src="data:image/' . $im->getImageFormat() . ';base64,' . base64_encode($blob) . '"/></div>';
+            .'<br/>'
+            .'<img 
+                src="data:image/' . $im->getImageFormat() . ';base64,' . base64_encode($blob) . '"
+                onload="this.style.width = `${this.naturalWidth / window.devicePixelRatio}px`"
+            />'
+            .'</div>';
         ob_flush();
     }
     
